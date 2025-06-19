@@ -172,3 +172,11 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+artifacts/X_reduced.pkl
+artifacts/Y.pkl
+data/raw/K9.data
+data/raw/K9.instance.tags
+data/processed/cleaned_features.csv
+data/processed/cleaned_tags.csv
+data/processed/encoded_labels.npy
+data/processed/tag_classes.txt
