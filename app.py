@@ -1,6 +1,7 @@
 import streamlit as st
 import joblib
 import numpy as np
+import pandas as pd
 import os
 
 # === Load model and reduced features shape ===
@@ -14,6 +15,23 @@ if os.path.exists(tag_classes_path):
         tag_classes = [line.strip() for line in f.readlines()]
 else:
     tag_classes = [f"Tag {i}" for i in range(model.n_classes_)]  # fallback
+
+# === Load tag mapping CSV (updated path to uploaded file) ===
+mapping_csv_path = "data/processed/cleaned_tags.csv"  # <--- updated here
+if os.path.exists(mapping_csv_path):
+    df_raw = pd.read_csv(mapping_csv_path)
+
+    # Split combined tag column (e.g., "p152l_a119c inactive")
+    df_raw[['full_tag', 'status']] = df_raw['tags'].astype(str).str.extract(r"^(.+?)\s+(\w+)$")
+    tag_mapping_df = df_raw[['id', 'full_tag', 'status']].dropna()
+    tag_mapping_df["full_tag"] = tag_mapping_df["full_tag"].str.strip().str.lower()
+    tag_mapping_df["status"] = tag_mapping_df["status"].str.strip().str.lower()
+else:
+    tag_mapping_df = pd.DataFrame(columns=["id", "full_tag", "status"])
+
+# === Debug Preview of CSV ===
+st.sidebar.subheader("🧾 Preview Tag Mapping Data")
+st.sidebar.dataframe(tag_mapping_df.head(10))
 
 # === Streamlit App Setup ===
 st.set_page_config(page_title="🔖 Tag Predictor", layout="wide")
@@ -31,9 +49,10 @@ if "example_vector" not in st.session_state:
 st.subheader("🎯 Load a Pre-filled Example")
 sample_index = st.selectbox(
     "Choose a sample index from dataset (0 to {})".format(len(X_reduced) - 1),
-    options=list(range(min(100, len(X_reduced)))),  # limit to 100 for UI speed
+    options=list(range(len(X_reduced))),  # use all records
     index=st.session_state.selected_sample_index,
 )
+
 
 # === Update sample on dropdown change ===
 if sample_index != st.session_state.selected_sample_index:
@@ -67,4 +86,11 @@ if submitted:
     else:
         st.success("✅ Predicted Tags:")
         for i in predicted_indices:
-            st.markdown(f"- {tag_classes[i]}")
+            predicted_tag = tag_classes[i].strip().lower()
+            matches = tag_mapping_df[tag_mapping_df["full_tag"].str.endswith(predicted_tag)]
+
+            if not matches.empty:
+                row = matches.iloc[0]  # Only first match
+                st.markdown(f"- **Predicted Tag:** `{predicted_tag}` → **Matched Tag:** `{row['full_tag']}` → **Status:** `{row['status']}` → **ID:** `{row['id']}`")
+            else:
+                st.markdown(f"- **Predicted Tag:** `{predicted_tag}` → ⚠️ No match found in tag mapping")
