@@ -25,7 +25,7 @@ This repository contains a complete pipeline for predicting multiple mutation ta
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/yourusername/mutation-tag-prediction.git
+git clone https://github.com/yourusername/mutation-tag-prediction.git](https://github.com/MasterBiswal/USD-Term1-AppliedAI-GroupSynergy
 cd mutation-tag-prediction
 ```
 
